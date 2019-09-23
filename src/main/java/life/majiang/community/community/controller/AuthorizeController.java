@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Controller
 public class AuthorizeController {
 
@@ -24,7 +26,7 @@ public class AuthorizeController {
     private String redirectUri;
 
     @GetMapping("/callback")
-    public String callback(@RequestParam(name = "code") String code, @RequestParam(name = "state") String state) {
+    public String callback(@RequestParam(name = "code") String code, @RequestParam(name = "state") String state, HttpServletRequest request) {
         AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
         accessTokenDTO.setClient_id(clientId);
         accessTokenDTO.setClient_secret(clientSecret);
@@ -36,6 +38,20 @@ public class AuthorizeController {
         GithubUser user = githubProvider.getUser(accessToken);
         System.out.println(user.getName());
         System.out.println(user.getId());
-        return "index";
+        Boolean userState = false;
+        if (user != null) {
+            userState = true;
+        }
+        if (userState) {
+            //Login successed, write session and cookie
+            request.getSession().setAttribute("user", user);
+            return "redirect:index";
+        } else {
+            //Login failed, restart the processing of Login
+            return "redirect:index";
+        }
+
+
+
     }
 }
